@@ -9,3 +9,10 @@ where country != '(not set)' and city != 'not available in demo dataset' and cit
 
 --filter that edits the leading space character from products name
 trim(leading ' ' from products."name")
+
+--filter that converts the price value down to normal increments.
+("totalTransactionRevenue" / 1000000) as trans_total
+("productPrice" / 1000000) as normal_prod_price
+
+--filtering product categories that don't follow the regular naming convention
+where "v2ProductCategory" not like 'Home/%'
