@@ -81,3 +81,14 @@ select "v2ProductCategory", count("v2ProductCategory")
 FROM all_sessions
 where "v2ProductCategory" not like 'Home/%'
 group by "v2ProductCategory"
+
+--displays repeat SKUs within all_sessions tab that have alternating pricing or naming, making it unrelialible for total revenue assumptions.
+with updated_price_list as(
+select ("productPrice" / 1000000) as prod_price, "productSKU", "v2ProductName", COUNT("productSKU") OVER (PARTITION BY "productSKU") as repeats
+from all_sessions
+group by 1, 2, 3
+order by "productSKU"
+)
+select *
+from updated_price_list
+where prod_price > 0 and repeats > 1
