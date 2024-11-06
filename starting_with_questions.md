@@ -34,37 +34,73 @@ The United States is the highest revenue country, and technically "not available
 **SQL Queries:**
 
 ~~~sql
---country query
+--order averages by country
+with order_unit_totals as
+(
 select
-  country,
-  avg("productQuantity") as "Average Number of Products",
-  count("productQuantity") as "Orders with Quantities Listed"
-FROM all_sessions
-where "productQuantity" is not null
+	all_sessions.country,
+	analytics."visitId",
+	sum(analytics.units_sold) as units_in_order
+from all_sessions
+join analytics
+on analytics."visitId" = all_sessions."visitId"
+where all_sessions.country != '(not set)' and analytics.units_sold is not null
+group by all_sessions.country, analytics."visitId"
+)	
+select country, avg(units_in_order)
+from order_unit_totals
 group by country
+order by avg desc
 ~~~
 
 ~~~sql
---city query
+--order averages by city
+with order_unit_totals as
+(
 select
-  country,
-  city,
-  avg("productQuantity") as "Average Number of Products",
-  count("productQuantity") as "Orders with Quantities Listed"
-FROM all_sessions
-where "productQuantity" is not null
-group by city, country
+	all_sessions.country,
+	all_sessions.city,
+	analytics."visitId",
+	sum(analytics.units_sold) as units_in_order
+from all_sessions
+join analytics
+on analytics."visitId" = all_sessions."visitId"
+where 
+  all_sessions.country != '(not set)' and 
+  analytics.units_sold is not null
+  group by all_sessions.country, all_sessions.city, analytics."visitId"
+)	
+select country, city, avg(units_in_order)
+from order_unit_totals
+group by country, city
+order by avg desc
 ~~~
+
 ~~~sql
---city query with only named cities
+--order averages by only named cities
+with order_unit_totals as
+(
 select
-  city,
-  avg("productQuantity") as "Average Number of Products",
-  count("productQuantity") as "Orders with Quantities Listed"
-FROM all_sessions
-where "productQuantity" is not null and city != 'not available in demo dataset' and city != '(not set)'
-group by city
+	all_sessions.country,
+	all_sessions.city,
+	analytics."visitId",
+	sum(analytics.units_sold) as units_in_order
+from all_sessions
+join analytics
+on analytics."visitId" = all_sessions."visitId"
+where 
+  all_sessions.country != '(not set)' and 
+  analytics.units_sold is not null and 
+  city != 'not available in demo dataset' and
+  city != '(not set)'
+group by all_sessions.country, all_sessions.city, analytics."visitId"
+)	
+select country, city, avg(units_in_order)
+from order_unit_totals
+group by country, city
+order by avg desc
 ~~~
+
 **Answer:**
 
 While the countries are clear as to what the average quantity of products ordered are for each, cities are a little less clear, as many countries don't list the city the order is from for those rows which have a value in the "productQuantity" column. Since many cities in several countries use the "not available in demo dataset" value, it is important to include the country column within the cities query, to establish as best as possible what the city average is, since otherwise they'd all get lumped together by the GROUP function.
